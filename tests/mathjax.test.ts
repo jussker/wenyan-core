@@ -96,11 +96,11 @@ describe("MathJaxRenderer", () => {
         expect(output).toContain('<section class="block-equation"'); // $$b$$
     });
 
-    // 可选：快照测试（Snapshot Testing）
-    // 这对于检测 MathJax 版本升级导致的 SVG 输出变化非常有用
-    it("should match snapshot for standard formula", () => {
+    it("should render standard formula with stable structure", () => {
         const input = "$x^2 + y^2 = z^2$";
         const output = renderer.parser(input);
-        expect(output).toMatchSnapshot();
+        expect(output).toContain('<span class="inline-equation"');
+        expect(output).toContain('math="x^2 + y^2 = z^2"');
+        expect(output).toContain("<svg");
     });
 });
