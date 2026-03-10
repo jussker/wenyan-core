@@ -5,7 +5,8 @@ import { fileURLToPath } from "node:url";
 import { publishToDraft } from "../src/node/publish.js";
 
 describe("publish.ts tests", () => {
-    it("publish to gzh", { timeout: 10000 }, async () => {
+    const itIfWechatCredentials = process.env.WECHAT_APP_ID && process.env.WECHAT_APP_SECRET ? it : it.skip;
+    itIfWechatCredentials("publish to gzh", { timeout: 10000 }, async () => {
         const __dirname = dirname(fileURLToPath(import.meta.url));
         const html = await readFile(join(__dirname, "publish.html"), "utf8");
         const data = await publishToDraft("自动化测试", html, "", {
