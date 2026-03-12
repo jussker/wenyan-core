@@ -4,6 +4,14 @@ import { SVG } from "@mathjax/src/js/output/svg.js";
 import { liteAdaptor } from "@mathjax/src/js/adaptors/liteAdaptor.js";
 import { RegisterHTMLHandler } from "@mathjax/src/js/handlers/html.js";
 
+// Register TeX package configurations before constructing TeX with these packages.
+import "@mathjax/src/js/input/tex/ams/AmsConfiguration.js";
+import "@mathjax/src/js/input/tex/newcommand/NewcommandConfiguration.js";
+import "@mathjax/src/js/input/tex/noundefined/NoUndefinedConfiguration.js";
+import "@mathjax/src/js/input/tex/autoload/AutoloadConfiguration.js";
+import "@mathjax/src/js/input/tex/require/RequireConfiguration.js";
+import "@mathjax/src/js/input/tex/configmacros/ConfigMacrosConfiguration.js";
+
 import type { LiteAdaptor } from "@mathjax/src/js/adaptors/liteAdaptor.js";
 import type { MathDocument } from "@mathjax/src/js/core/MathDocument.js";
 import type { MathItem } from "@mathjax/src/js/core/MathItem.js";
@@ -25,6 +33,10 @@ export interface MathJaxParserOptions {
 // MathJax 的 HTMLHandler 是 **全局注册的**
 let htmlHandlerRegistered = false;
 
+/* ---------------------------------- */
+/* Factory                            */
+/* ---------------------------------- */
+
 const DEFAULT_TEX_PACKAGES = [
     "base",
     "ams",
@@ -34,10 +46,6 @@ const DEFAULT_TEX_PACKAGES = [
     "require",
     "configmacros",
 ];
-
-/* ---------------------------------- */
-/* Factory                            */
-/* ---------------------------------- */
 
 export function createMathJaxParser(options: MathJaxParserOptions = {}) {
     /* ---------- adaptor ---------- */
