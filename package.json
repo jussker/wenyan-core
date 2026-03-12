@@ -49,7 +49,6 @@
   "scripts": {
     "check": "tsc --noEmit",
     "build": "vite build && tsc",
-    "prepare": "npm install --ignore-scripts --no-audit --no-fund form-data-encoder formdata-node jsdom && npm run build",
     "test": "pnpm build && vitest",
     "test:wrapper": "vitest run tests/wrapper.test.ts",
     "test:publish": "vitest run tests/publish.test.ts",
@@ -67,12 +66,12 @@
     "vitest": "^3.2.4"
   },
   "dependencies": {
+    "@mathjax/src": "^4.0.0",
     "css-tree": "^3.1.0",
     "front-matter": "^4.0.2",
     "highlight.js": "11.10.0",
     "marked": "^15.0.12",
     "marked-highlight": "^2.2.1",
-    "@mathjax/src": "^4.0.0",
     "puppeteer": "^24.15.0"
   },
   "peerDependencies": {
