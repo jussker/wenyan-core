@@ -3,7 +3,6 @@ import { TeX } from "@mathjax/src/js/input/tex.js";
 import { SVG } from "@mathjax/src/js/output/svg.js";
 import { liteAdaptor } from "@mathjax/src/js/adaptors/liteAdaptor.js";
 import { RegisterHTMLHandler } from "@mathjax/src/js/handlers/html.js";
-import { AllPackages } from "@mathjax/src/js/input/tex/AllPackages.js";
 
 import type { LiteAdaptor } from "@mathjax/src/js/adaptors/liteAdaptor.js";
 import type { MathDocument } from "@mathjax/src/js/core/MathDocument.js";
@@ -25,6 +24,16 @@ export interface MathJaxParserOptions {
 
 // MathJax 的 HTMLHandler 是 **全局注册的**
 let htmlHandlerRegistered = false;
+
+const DEFAULT_TEX_PACKAGES = [
+    "base",
+    "ams",
+    "newcommand",
+    "noundefined",
+    "autoload",
+    "require",
+    "configmacros",
+];
 
 /* ---------------------------------- */
 /* Factory                            */
@@ -56,7 +65,7 @@ export function createMathJaxParser(options: MathJaxParserOptions = {}) {
             ["\\[", "\\]"],
         ],
         processEscapes: true,
-        packages: AllPackages,
+        packages: DEFAULT_TEX_PACKAGES,
     });
 
     const svg = new SVG({
