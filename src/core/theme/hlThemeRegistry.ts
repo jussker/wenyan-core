@@ -29,6 +29,8 @@ const hlThemeIds = [
     "solarized-dark",
     "solarized-light",
     "xcode",
+    "meridian",
+    "meridian_night",
 ];
 
 const cssModules = import.meta.glob("/src/assets/highlight/styles/*.css", {

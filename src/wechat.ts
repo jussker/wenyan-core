@@ -383,8 +383,21 @@ export function createWechatClient(adapter: HttpAdapter) {
             return parseWechatResult(res);
         },
 
-        async publishArticle(accessToken: string, options: WechatPublishOptions): Promise<WechatPublishResponse> {
-            return this.draftAdd(accessToken, options);
+        /**
+         * 渲染文章到公众号草稿箱（draftAdd 的语义别名）。
+         *
+         * @remarks 仅创建草稿，不触发群发/发布。发布草稿请使用 freepublishSubmit。
+         * @remarks 直接使用闭包中的 adapter，避免解构赋值时 this 丢失。
+         */
+        async createDraft(accessToken: string, options: WechatPublishOptions): Promise<WechatPublishResponse> {
+            const res = await adapter.fetch(withAccessToken(draftAddUrl, accessToken), {
+                method: "POST",
+                body: JSON.stringify({
+                    articles: [options],
+                }),
+            });
+            const data: WechatPublishResponse = await parseWechatResult(res);
+            return data;
         },
     };
 }

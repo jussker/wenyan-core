@@ -1,0 +1,288 @@
+/* Meridian Theme — Light / Author: wenyan-mcp / 2026 */
+
+#wenyan {
+  /* Design Tokens — defined here, NOT in :root (WeChat CSS applier skips :xxx selectors) */
+  --text-color: #1C1917;
+  --text-secondary: #57534E;
+  --primary-color: #1D4ED8;
+  --primary-light: #DBEAFE;
+  --bg-color: #F8F7F4;
+  --border-color: #E7E5E4;
+  --blockquote-bg: #F0F6FF;
+  --blockquote-border: #93C5FD;
+  --code-fg: #1E40AF;
+  --code-bg: #EFF6FF;
+  --table-header-bg: #F1F5F9;
+  --table-border: #CBD5E1;
+
+  font-size: 17px;
+  line-height: 1.85;
+  color: var(--text-color);
+  background-color: var(--bg-color);
+  word-break: break-word;
+  word-wrap: break-word;
+}
+
+/* ── Body Text ───────────────────────────────────────── */
+
+#wenyan p {
+  margin: 1.2em 0;
+  color: var(--text-color);
+  text-align: left;
+}
+
+#wenyan strong {
+  color: var(--primary-color);
+  font-weight: bold;
+}
+
+#wenyan em {
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+#wenyan del {
+  color: var(--text-secondary);
+  text-decoration: line-through;
+}
+
+/* ── Links ───────────────────────────────────────────── */
+
+#wenyan a {
+  color: var(--primary-color);
+  text-decoration: none;
+  word-wrap: break-word;
+}
+
+/* ── Headings ────────────────────────────────────────── */
+
+#wenyan h1,
+#wenyan h2,
+#wenyan h3,
+#wenyan h4,
+#wenyan h5,
+#wenyan h6 {
+  color: var(--text-color);
+  margin: 1.4em 0 0.8em;
+  font-weight: bold;
+  line-height: 1.4;
+}
+
+#wenyan h1 {
+  font-size: 1.5em;
+  text-align: center;
+}
+
+/* h1 装饰线：固定色值，不用 var()，确保伪元素处理器能正确写入 */
+#wenyan h1::after {
+  content: "";
+  display: block;
+  width: 4em;
+  height: 2px;
+  margin: 0.3em auto 0;
+  border-bottom: 2px solid #1D4ED8;
+}
+
+#wenyan h2 {
+  font-size: 1.3em;
+  border-left: 4px solid var(--primary-color);
+  padding-left: 12px;
+}
+
+#wenyan h3 {
+  font-size: 1.15em;
+  border-left: 2px solid var(--primary-color);
+  padding-left: 8px;
+}
+
+#wenyan h4,
+#wenyan h5,
+#wenyan h6 {
+  font-size: 1.05em;
+}
+
+/* ── Lists ───────────────────────────────────────────── */
+
+#wenyan ul {
+  list-style-type: disc;
+  padding-left: 1.5em;
+  margin: 0.8em 0;
+}
+
+#wenyan ol {
+  list-style-type: decimal;
+  padding-left: 1.5em;
+  margin: 0.8em 0;
+}
+
+#wenyan li {
+  margin: 0.4em 0;
+  color: var(--text-color);
+}
+
+/* WeChat wraps each li's children in <section>; ensure block display */
+#wenyan li > section {
+  display: block;
+}
+
+#wenyan ul ul {
+  list-style-type: circle;
+}
+
+#wenyan ol ol {
+  list-style-type: lower-alpha;
+}
+
+#wenyan li code {
+  color: var(--code-fg);
+  background-color: var(--code-bg);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.88em;
+  border: 1px solid #BFDBFE;
+}
+
+/* ── Images ──────────────────────────────────────────── */
+
+#wenyan img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 1.2em auto;
+  border-radius: 4px;
+}
+
+/* ── Table ───────────────────────────────────────────── */
+
+#wenyan table {
+  display: table;
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.4em auto;
+  overflow-x: auto;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+#wenyan table th,
+#wenyan table td {
+  border: 1px solid var(--table-border);
+  padding: 8px 12px;
+  font-size: 0.88em;
+  line-height: 1.6;
+  vertical-align: top;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  color: var(--text-color);
+}
+
+#wenyan table th {
+  font-weight: bold;
+  text-align: center;
+  background-color: var(--table-header-bg);
+  color: var(--primary-color);
+}
+
+#wenyan table tr:nth-child(even) {
+  background-color: var(--primary-light);
+}
+
+/* ── Blockquote ──────────────────────────────────────── */
+
+#wenyan blockquote {
+  display: block;
+  border-left: 4px solid var(--blockquote-border);
+  padding: 0.8em 1.2em;
+  margin: 1.2em 0;
+  background-color: var(--blockquote-bg);
+  color: var(--text-secondary);
+  border-radius: 0 4px 4px 0;
+  font-size: 0.95em;
+}
+
+/* ── Inline Code ─────────────────────────────────────── */
+
+#wenyan p code {
+  color: var(--code-fg);
+  background-color: var(--code-bg);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.88em;
+  border: 1px solid #BFDBFE;
+  word-break: break-all;
+}
+
+/* ── Code Block ──────────────────────────────────────── */
+
+#wenyan pre {
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  margin: 1.4em 0;
+  padding: 0;
+  overflow-x: auto;
+  line-height: 1.7;
+  font-size: 14px;
+}
+
+#wenyan pre code {
+  display: block;
+  overflow-x: auto;
+  border-radius: 8px;
+  background: transparent;
+  padding: 0;
+  color: inherit;
+}
+
+/* 列表内代码块重置：消除行内代码 (li code) 注入的 border 和 font-size */
+#wenyan li pre code {
+  border: none;
+  font-size: inherit;
+  padding: 0;
+  background: transparent;
+}
+
+/* ── Divider ─────────────────────────────────────────── */
+
+#wenyan hr {
+  border: 0;
+  border-top: 1px solid var(--border-color);
+  margin: 2em 0;
+}
+
+/* ── Footnotes ───────────────────────────────────────── */
+
+#wenyan .footnote {
+  color: var(--primary-color);
+  font-size: 0.85em;
+}
+
+/* 覆盖 WeChat 平台对裸 <section> 施加的默认边框/背景样式 */
+#wenyan #footnotes {
+  display: block;
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 1em 0;
+}
+
+#wenyan #footnotes p {
+  display: flex;
+  margin: 0;
+  font-size: 0.85em;
+  color: var(--text-secondary);
+  text-align: left;
+}
+
+#wenyan .footnote-num {
+  display: inline;
+  width: 10%;
+  color: var(--primary-color);
+}
+
+#wenyan .footnote-txt {
+  display: inline;
+  width: 90%;
+  word-wrap: break-word;
+  word-break: break-all;
+  color: var(--text-secondary);
+}

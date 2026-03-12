@@ -6,6 +6,10 @@ import { JSDOM } from "jsdom";
 
 const wenyanCoreInstance = await createWenyanCore();
 
+const ENV_DEFAULT_AUTHOR = "WECHAT_DEFAULT_AUTHOR";
+const ENV_CTA_PRE_HEAD = "WECHAT_CTA_PRE_HEAD";
+const ENV_CTA_POST_FOOTNOTE = "WECHAT_CTA_POST_FOOTNOTE";
+
 export async function renderWithTheme(markdownContent: string, options: RenderOptions): Promise<StyledContent> {
     if (!markdownContent) {
         throw new Error("No content provided for rendering.");
@@ -40,11 +44,23 @@ export async function renderWithTheme(markdownContent: string, options: RenderOp
 
 export async function renderStyledContent(content: string, options: ApplyStylesOptions = {}): Promise<StyledContent> {
     const preHandlerContent = await wenyanCoreInstance.handleFrontMatter(content);
+    const fallbackAuthor = getEnvSnippet(ENV_DEFAULT_AUTHOR);
+    if (!preHandlerContent.author && fallbackAuthor) {
+        preHandlerContent.author = fallbackAuthor;
+    }
+
+    const preHeadCtaHtml = await resolveSnippetToHtml(getEnvSnippet(ENV_CTA_PRE_HEAD));
+    const postFootnoteCtaHtml = await resolveSnippetToHtml(getEnvSnippet(ENV_CTA_POST_FOOTNOTE));
+
     const html = await wenyanCoreInstance.renderMarkdown(preHandlerContent.body);
     const dom = new JSDOM(`<body><section id="wenyan">${html}</section></body>`);
     const document = dom.window.document;
     const wenyan = document.getElementById("wenyan");
-    const result = await wenyanCoreInstance.applyStylesWithTheme(wenyan!, options);
+    const result = await wenyanCoreInstance.applyStylesWithTheme(wenyan!, {
+        ...options,
+        preHeadCtaHtml,
+        postFootnoteCtaHtml,
+    });
     return {
         content: result,
         title: preHandlerContent.title,
@@ -53,6 +69,27 @@ export async function renderStyledContent(content: string, options: ApplyStylesO
         author: preHandlerContent.author,
         source_url: preHandlerContent.source_url,
     };
+}
+
+function getEnvSnippet(name: string): string {
+    const value = process.env[name] || "";
+    return value.trim().replace(/\\n/g, "\n");
+}
+
+function looksLikeHtmlSnippet(snippet: string): boolean {
+    return /<\/?[a-z][\w-]*(\s[^>]*)?>/i.test(snippet);
+}
+
+async function resolveSnippetToHtml(snippet: string): Promise<string> {
+    if (!snippet) {
+        return "";
+    }
+
+    if (looksLikeHtmlSnippet(snippet)) {
+        return snippet;
+    }
+
+    return await wenyanCoreInstance.renderMarkdown(snippet);
 }
 
 // --- 处理输入源、文件路径和主题 ---

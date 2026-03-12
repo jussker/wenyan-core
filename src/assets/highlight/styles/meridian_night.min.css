@@ -1,0 +1,22 @@
+/* Meridian Night hlTheme — paired with meridian_night article theme */
+/* Author: wenyan-mcp / 2026 */
+
+pre code.hljs { display:block;overflow-x:auto;padding:1em 1.2em }
+code.hljs { padding:2px 5px }
+.hljs { color:#E2E8F0;background:#0F172A }
+.hljs-comment,.hljs-quote { color:#475569 }
+.hljs-keyword,.hljs-selector-tag,.hljs-type { color:#93C5FD }
+.hljs-string { color:#86EFAC }
+.hljs-number,.hljs-symbol,.hljs-bullet,.hljs-literal { color:#FCA5A5 }
+.hljs-name,.hljs-section,.hljs-title,.hljs-function .hljs-title,.hljs-title.function_ { color:#34D399 }
+.hljs-attr,.hljs-attribute { color:#FCD34D }
+.hljs-built_in,.hljs-class .hljs-title,.hljs-title.class_ { color:#C4B5FD }
+.hljs-variable,.hljs-template-variable { color:#93C5FD }
+.hljs-operator,.hljs-punctuation,.hljs-subst { color:#94A3B8 }
+.hljs-meta,.hljs-meta .hljs-keyword { color:#F9A8D4 }
+.hljs-link { color:#93C5FD;text-decoration:underline }
+.hljs-emphasis { font-style:italic }
+.hljs-strong { font-weight:bold;color:#E2E8F0 }
+.hljs-deletion { color:#FCA5A5 }
+.hljs-addition { color:#86EFAC }
+.hljs-tag { color:#67E8F9 }

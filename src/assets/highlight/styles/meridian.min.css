@@ -1,0 +1,22 @@
+/* Meridian Light hlTheme — paired with meridian article theme */
+/* Author: wenyan-mcp / 2026 */
+
+pre code.hljs { display:block;overflow-x:auto;padding:1em 1.2em }
+code.hljs { padding:2px 5px }
+.hljs { color:#1E293B;background:#F0F7FF }
+.hljs-comment,.hljs-quote { color:#94A3B8 }
+.hljs-keyword,.hljs-selector-tag,.hljs-type { color:#1D4ED8 }
+.hljs-string { color:#15803D }
+.hljs-number,.hljs-symbol,.hljs-bullet,.hljs-literal { color:#C2410C }
+.hljs-name,.hljs-section,.hljs-title,.hljs-function.hljs-title,.hljs-title.function_ { color:#0F766E }
+.hljs-attr,.hljs-attribute { color:#B45309 }
+.hljs-built_in,.hljs-class .hljs-title,.hljs-title.class_ { color:#7C3AED }
+.hljs-variable,.hljs-template-variable { color:#1D4ED8 }
+.hljs-operator,.hljs-punctuation,.hljs-subst { color:#64748B }
+.hljs-meta,.hljs-meta .hljs-keyword { color:#D97706 }
+.hljs-link { color:#1D4ED8;text-decoration:underline }
+.hljs-emphasis { font-style:italic }
+.hljs-strong { font-weight:bold;color:#1E293B }
+.hljs-deletion { color:#DC2626 }
+.hljs-addition { color:#15803D }
+.hljs-tag { color:#0891B2 }

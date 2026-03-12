@@ -1,15 +1,17 @@
 import { JSDOM } from "jsdom";
 import { fileFromPath } from "formdata-node/file-from-path";
 import path from "node:path";
-import { stat } from "node:fs/promises";
+import { stat, writeFile, unlink } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import { RuntimeEnv } from "./runtimeEnv.js";
 import { createWechatClient, WechatPublishResponse, WechatUploadResponse } from "../wechat.js";
 import { nodeHttpAdapter } from "./nodeHttpAdapter.js";
 import { tokenStore } from "./tokenStore.js";
 import { md5FromBuffer, md5FromFile } from "./utils.js";
 import { uploadCacheStore } from "./uploadCacheStore.js";
+import { replaceTablesWithScreenshots } from "./tableScreenshot.js";
 
-const { uploadMaterial, publishArticle, fetchAccessToken } = createWechatClient(nodeHttpAdapter);
+const { uploadMaterial, createDraft, fetchAccessToken } = createWechatClient(nodeHttpAdapter);
 const mediaIdMapping = new Map<string, string>(); // 微信 url 和 media_id 的映射
 
 export interface WechatPublishOptions {
@@ -132,7 +134,8 @@ async function uploadImages(
     const mediaIds = (await Promise.all(uploadPromises)).filter(Boolean);
     const firstImageId = mediaIds[0] || "";
 
-    const updatedHtml = dom.serialize();
+    const wenyanEl = dom.window.document.getElementById("wenyan") as HTMLElement | null;
+    const updatedHtml = wenyanEl ? wenyanEl.outerHTML : content;
     return { html: updatedHtml, firstImageId };
 }
 
@@ -153,7 +156,22 @@ export async function publishToWechatDraft(
     const accessToken = await getAccessTokenWithCache(appIdFinal, appSecretFinal);
 
     // 上传正文图片
-    const { html, firstImageId } = await uploadImages(content, accessToken, relativePath);
+    const { html: rawHtml, firstImageId } = await uploadImages(content, accessToken, relativePath);
+
+    // 截图并替换表格（PC 宽度渲染，提升移动端表格可读性）
+    const html = await replaceTablesWithScreenshots(
+        rawHtml,
+        async (buffer, filename) => {
+            const tmpPath = path.join(tmpdir(), filename);
+            await writeFile(tmpPath, buffer);
+            try {
+                const resp = await uploadImage(tmpPath, accessToken, filename, relativePath);
+                return resp.url;
+            } finally {
+                await unlink(tmpPath).catch(() => {});
+            }
+        },
+    );
 
     // 处理封面图
     let thumbMediaId = "";
@@ -186,7 +204,7 @@ export async function publishToWechatDraft(
         throw new Error("你必须指定一张封面图或者在正文中至少出现一张图片。");
     }
 
-    const data = await publishArticle(accessToken, {
+    const data = await createDraft(accessToken, {
         title,
         content: html,
         thumb_media_id: thumbMediaId,

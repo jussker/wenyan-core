@@ -84,6 +84,20 @@ const gzhBuiltInThemeMetas: ThemeMeta[] = [
         appName: "物理猫-薄荷",
         author: "sumruler",
     },
+    {
+        id: "meridian",
+        name: "Meridian",
+        description: "Editorial minimalism in warm off-white and deep blue — optimized for 30-40 long-form reading.",
+        appName: "清晨经纬",
+        author: "wenyan-mcp",
+    },
+    {
+        id: "meridian_night",
+        name: "Meridian Night",
+        description: "Dark editorial theme in deep navy — easy on eyes for night reading.",
+        appName: "深夜经纬",
+        author: "wenyan-mcp",
+    },
 ];
 
 const otherThemeIds = ["juejin_default", "medium_default", "toutiao_default", "zhihu_default"];

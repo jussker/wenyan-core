@@ -1,6 +1,6 @@
 import { monospace, resolveCssContent, sansSerif } from "./utils.js";
 import { registerBuiltInHlThemes, getHlTheme, getAllHlThemes } from "./theme/hlThemeRegistry.js";
-import { addFootnotes } from "./renderer/footnotesRender.js";
+import { addFootnotes, normalizeMarkdownFootnotes } from "./renderer/footnotesRender.js";
 import { FrontMatterResult, handleFrontMatter } from "./parser/frontMatterParser.js";
 import { renderHighlightTheme } from "./renderer/highlightApplyRender.js";
 import { renderMacStyle } from "./renderer/macStyleRender.js";
@@ -25,6 +25,8 @@ export interface ApplyStylesOptions {
     hlThemeCss?: string;
     isMacStyle?: boolean;
     isAddFootnote?: boolean;
+    preHeadCtaHtml?: string;
+    postFootnoteCtaHtml?: string;
 }
 
 export async function createWenyanCore(options: WenyanOptions = {}) {
@@ -53,6 +55,8 @@ export async function createWenyanCore(options: WenyanOptions = {}) {
                 hlThemeCss,
                 isMacStyle = true,
                 isAddFootnote = true,
+                preHeadCtaHtml = "",
+                postFootnoteCtaHtml = "",
             } = options;
             const [resolvedThemeCss, resolvedHlThemeCss] = await Promise.all([
                 // 任务 1: 解析文章主题
@@ -78,6 +82,8 @@ export async function createWenyanCore(options: WenyanOptions = {}) {
                 hlThemeCss: resolvedHlThemeCss,
                 isMacStyle,
                 isAddFootnote,
+                preHeadCtaHtml,
+                postFootnoteCtaHtml,
             });
         },
         async applyStylesWithResolvedCss(
@@ -87,14 +93,30 @@ export async function createWenyanCore(options: WenyanOptions = {}) {
                 hlThemeCss: string;
                 isMacStyle: boolean;
                 isAddFootnote: boolean;
+                preHeadCtaHtml: string;
+                postFootnoteCtaHtml: string;
             },
         ): Promise<string> {
-            const { themeCss = "", hlThemeCss = "", isMacStyle = true, isAddFootnote = true } = options;
+            const {
+                themeCss = "",
+                hlThemeCss = "",
+                isMacStyle = true,
+                isAddFootnote = true,
+                preHeadCtaHtml = "",
+                postFootnoteCtaHtml = "",
+            } = options;
             if (!wenyanElement) {
                 throw new Error("wenyanElement不能为空");
             }
             if (isAddFootnote) {
                 addFootnotes(wenyanElement);
+                normalizeMarkdownFootnotes(wenyanElement);
+            }
+            if (preHeadCtaHtml) {
+                insertBeforeFirstHeading(wenyanElement, preHeadCtaHtml);
+            }
+            if (postFootnoteCtaHtml) {
+                insertAfterFootnotes(wenyanElement, postFootnoteCtaHtml);
             }
             if (isMacStyle) {
                 renderMacStyle(wenyanElement);
@@ -117,6 +139,24 @@ export async function createWenyanCore(options: WenyanOptions = {}) {
             return wenyanElement.outerHTML;
         },
     };
+}
+
+function insertBeforeFirstHeading(wenyanElement: HTMLElement, snippetHtml: string): void {
+    const firstHeading = wenyanElement.querySelector<HTMLElement>("h1,h2,h3,h4,h5,h6");
+    if (firstHeading) {
+        firstHeading.insertAdjacentHTML("beforebegin", snippetHtml);
+        return;
+    }
+    wenyanElement.insertAdjacentHTML("afterbegin", snippetHtml);
+}
+
+function insertAfterFootnotes(wenyanElement: HTMLElement, snippetHtml: string): void {
+    const footnotes = wenyanElement.querySelector<HTMLElement>("#footnotes");
+    if (footnotes) {
+        footnotes.insertAdjacentHTML("afterend", snippetHtml);
+        return;
+    }
+    wenyanElement.insertAdjacentHTML("beforeend", snippetHtml);
 }
 
 const DEFAULT_CSS_UPDATES: CssUpdateMap = {
