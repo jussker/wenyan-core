@@ -1,13 +1,13 @@
-import { mathjax } from "mathjax-full/js/mathjax.js";
-import { TeX } from "mathjax-full/js/input/tex.js";
-import { SVG } from "mathjax-full/js/output/svg.js";
-import { liteAdaptor } from "mathjax-full/js/adaptors/liteAdaptor.js";
-import { RegisterHTMLHandler } from "mathjax-full/js/handlers/html.js";
-import { AllPackages } from "mathjax-full/js/input/tex/AllPackages.js";
+import { mathjax } from "@mathjax/src/js/mathjax.js";
+import { TeX } from "@mathjax/src/js/input/tex.js";
+import { SVG } from "@mathjax/src/js/output/svg.js";
+import { liteAdaptor } from "@mathjax/src/js/adaptors/liteAdaptor.js";
+import { RegisterHTMLHandler } from "@mathjax/src/js/handlers/html.js";
+import { AllPackages } from "@mathjax/src/js/input/tex/AllPackages.js";
 
-import type { LiteAdaptor } from "mathjax-full/js/adaptors/liteAdaptor.js";
-import type { MathDocument } from "mathjax-full/js/core/MathDocument.js";
-import type { MathItem } from "mathjax-full/js/core/MathItem.js";
+import type { LiteAdaptor } from "@mathjax/src/js/adaptors/liteAdaptor.js";
+import type { MathDocument } from "@mathjax/src/js/core/MathDocument.js";
+import type { MathItem } from "@mathjax/src/js/core/MathItem.js";
 
 /* ---------------------------------- */
 /* Types                              */
