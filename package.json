@@ -49,7 +49,7 @@
   "scripts": {
     "check": "tsc --noEmit",
     "build": "vite build && tsc",
-    "prepare": "npm run build",
+    "prepare": "npm install --ignore-scripts --no-audit --no-fund form-data-encoder formdata-node jsdom && npm run build",
     "test": "pnpm build && vitest",
     "test:wrapper": "vitest run tests/wrapper.test.ts",
     "test:publish": "vitest run tests/publish.test.ts",
