@@ -15,7 +15,8 @@
   ],
   "type": "module",
   "files": [
-    "dist"
+    "dist",
+    "scripts"
   ],
   "homepage": "https://github.com/caol64/wenyan-core#readme",
   "repository": {
