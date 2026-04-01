@@ -3,6 +3,12 @@ import { configStore } from "./configStore.js";
 import { GetInputContentFn, RenderContext, RenderOptions, StyledContent } from "./types.js";
 import { getNormalizeFilePath, readFileContent } from "./utils.js";
 import { JSDOM } from "jsdom";
+import { applyAdaptiveImageInteractions } from "./imageMeta.js";
+import {
+    MermaidDiagramRenderer,
+    MermaidTempFileWriter,
+    replaceMermaidCodeBlocksWithImages,
+} from "./mermaidScreenshot.js";
 
 const wenyanCoreInstance = await createWenyanCore();
 
@@ -10,11 +16,23 @@ const ENV_DEFAULT_AUTHOR = "WECHAT_DEFAULT_AUTHOR";
 const ENV_CTA_PRE_HEAD = "WECHAT_CTA_PRE_HEAD";
 const ENV_CTA_POST_FOOTNOTE = "WECHAT_CTA_POST_FOOTNOTE";
 
-export async function renderWithTheme(markdownContent: string, options: RenderOptions): Promise<StyledContent> {
+type NodeRenderStyleOptions = ApplyStylesOptions & {
+    assetBaseDir?: string;
+    mermaid?: boolean;
+    mermaidPpi?: number;
+    mermaidRenderer?: MermaidDiagramRenderer;
+    mermaidTempFileWriter?: MermaidTempFileWriter;
+};
+
+export async function renderWithTheme(
+    markdownContent: string,
+    options: RenderOptions,
+    assetBaseDir?: string,
+): Promise<StyledContent> {
     if (!markdownContent) {
         throw new Error("No content provided for rendering.");
     }
-    const { theme, customTheme, highlight, macStyle, footnote } = options;
+    const { theme, customTheme, highlight, macStyle, footnote, mermaid, mermaidPpi } = options;
 
     let handledCustomTheme: string | undefined = customTheme;
     // 当用户传入自定义主题路径时，优先级最高
@@ -37,12 +55,16 @@ export async function renderWithTheme(markdownContent: string, options: RenderOp
         isMacStyle: macStyle,
         isAddFootnote: footnote,
         themeCss: handledCustomTheme,
+        assetBaseDir,
+        mermaid,
+        mermaidPpi,
     });
 
     return gzhContent;
 }
 
-export async function renderStyledContent(content: string, options: ApplyStylesOptions = {}): Promise<StyledContent> {
+export async function renderStyledContent(content: string, options: NodeRenderStyleOptions = {}): Promise<StyledContent> {
+    const { assetBaseDir, mermaid, mermaidPpi, mermaidRenderer, mermaidTempFileWriter, ...styleOptions } = options;
     const preHandlerContent = await wenyanCoreInstance.handleFrontMatter(content);
     const fallbackAuthor = getEnvSnippet(ENV_DEFAULT_AUTHOR);
     if (!preHandlerContent.author && fallbackAuthor) {
@@ -56,8 +78,15 @@ export async function renderStyledContent(content: string, options: ApplyStylesO
     const dom = new JSDOM(`<body><section id="wenyan">${html}</section></body>`);
     const document = dom.window.document;
     const wenyan = document.getElementById("wenyan");
+    await replaceMermaidCodeBlocksWithImages(wenyan!, {
+        mermaid,
+        mermaidPpi,
+        renderer: mermaidRenderer,
+        writeTempFile: mermaidTempFileWriter,
+    });
+    await applyAdaptiveImageInteractions(wenyan!, assetBaseDir);
     const result = await wenyanCoreInstance.applyStylesWithTheme(wenyan!, {
-        ...options,
+        ...styleOptions,
         preHeadCtaHtml,
         postFootnoteCtaHtml,
     });
@@ -99,7 +128,7 @@ export async function prepareRenderContext(
     getInputContent: GetInputContentFn,
 ): Promise<RenderContext> {
     const { content, absoluteDirPath } = await getInputContent(inputContent, options.file);
-    const gzhContent = await renderWithTheme(content, options);
+    const gzhContent = await renderWithTheme(content, options, absoluteDirPath);
 
     return { gzhContent, absoluteDirPath };
 }

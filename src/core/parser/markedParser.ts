@@ -30,6 +30,38 @@ export function createMarkedClient() {
             md.use({
                 extensions: [
                     {
+                        name: "wikiImage",
+                        level: "inline",
+                        start(src) {
+                            return src.match(/!\[\[/)?.index;
+                        },
+                        tokenizer(src) {
+                            const rule = /^!\[\[([^\]\n|]+?)(?:\|([^\]\n]*))?\]\]/;
+                            const match = rule.exec(src);
+                            if (!match) {
+                                return undefined;
+                            }
+
+                            const href = match[1].trim();
+                            if (!href) {
+                                return undefined;
+                            }
+
+                            const text = (match[2] || "").trim();
+                            return {
+                                type: "wikiImage",
+                                raw: match[0],
+                                href,
+                                text,
+                                tokens: [],
+                            };
+                        },
+                        renderer(token) {
+                            const title = token.text ? ` title="${token.text}"` : "";
+                            return `<img src="${token.href}" alt="${token.text || ""}"${title}>`;
+                        },
+                    },
+                    {
                         name: "attributeImage",
                         level: "inline",
                         start(src) {
