@@ -5,6 +5,8 @@ export interface RenderOptions {
     highlight: string;
     macStyle: boolean;
     footnote: boolean;
+    mermaid?: boolean;
+    mermaidPpi?: number;
 }
 
 export interface PublishOptions extends RenderOptions {}

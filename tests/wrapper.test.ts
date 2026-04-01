@@ -55,4 +55,5 @@ describe("wrapper.ts tests", () => {
         expect(gzhContent.content).toContain("</h2>");
         expect(gzhContent.content).toContain("linear-gradient");
     });
+
 });
