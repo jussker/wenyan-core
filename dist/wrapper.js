@@ -175,7 +175,10 @@ async function uploadCover(serverUrl, headers, cover, relativePath) {
 }
 const LONG_IMAGE_RATIO_THRESHOLD = 2.2;
 const LONG_IMAGE_MAX_HEIGHT_VH = 72;
-async function applyAdaptiveImageInteractions(root, relativePath) {
+async function applyAdaptiveImageInteractions(root, relativePath, options = {}) {
+  const mode = resolveLongImageMode(options.mode);
+  const ratioThreshold = resolveLongImageRatioThreshold(options.ratioThreshold);
+  const maxHeightVh = resolveLongImageMaxHeightVh(options.maxHeightVh);
   const images = Array.from(root.querySelectorAll("img"));
   for (const image of images) {
     image.classList.add("wy-img");
@@ -183,20 +186,48 @@ async function applyAdaptiveImageInteractions(root, relativePath) {
     if (!dimension) {
       image.classList.add("wy-img-normal");
       applyNormalImageStyle(image);
+      if (mode === "always") {
+        image.classList.remove("wy-img-normal");
+        image.classList.add("wy-img-long");
+        applyLongImageInteraction(image, maxHeightVh);
+      }
       continue;
     }
     const ratio = dimension.height / dimension.width;
     image.setAttribute("data-wy-width", String(dimension.width));
     image.setAttribute("data-wy-height", String(dimension.height));
     image.setAttribute("data-wy-ratio", ratio.toFixed(4));
-    if (ratio >= LONG_IMAGE_RATIO_THRESHOLD) {
+    if (mode === "off") {
+      image.classList.add("wy-img-normal");
+      applyNormalImageStyle(image);
+      continue;
+    }
+    if (mode === "always" || ratio >= ratioThreshold) {
       image.classList.add("wy-img-long");
-      applyLongImageInteraction(image);
+      applyLongImageInteraction(image, maxHeightVh);
     } else {
       image.classList.add("wy-img-normal");
       applyNormalImageStyle(image);
     }
   }
+}
+function resolveLongImageMode(mode) {
+  if (mode === "always" || mode === "off") {
+    return mode;
+  }
+  return "auto";
+}
+function resolveLongImageRatioThreshold(value) {
+  if (!Number.isFinite(value) || !value || value <= 0) {
+    return LONG_IMAGE_RATIO_THRESHOLD;
+  }
+  return value;
+}
+function resolveLongImageMaxHeightVh(value) {
+  if (!Number.isFinite(value) || !value || value <= 0) {
+    return LONG_IMAGE_MAX_HEIGHT_VH;
+  }
+  return value;
 }
 async function resolveImageDimension(image, relativePath) {
   const fromAttributes = getDimensionFromAttributes(image);
@@ -261,7 +292,7 @@ function applyNormalImageStyle(image) {
   image.style.setProperty("display", "block");
   image.style.setProperty("margin", "0 auto");
 }
-function applyLongImageInteraction(image) {
+function applyLongImageInteraction(image, maxHeightVh) {
   let wrapper = image.parentElement;
   if (!wrapper || !wrapper.classList.contains("wy-img-long-scroll")) {
     wrapper = image.ownerDocument.createElement("div");
@@ -271,7 +302,7 @@ function applyLongImageInteraction(image) {
   }
   wrapper.style.setProperty("display", "block");
   wrapper.style.setProperty("margin", "0 auto");
-  wrapper.style.setProperty("max-height", `${LONG_IMAGE_MAX_HEIGHT_VH}vh`);
+  wrapper.style.setProperty("max-height", `${maxHeightVh}vh`);
   wrapper.style.setProperty("overflow-y", "auto");
   wrapper.style.setProperty("overflow-x", "hidden");
   wrapper.style.setProperty("-webkit-overflow-scrolling", "touch");
@@ -374,13 +405,24 @@ function parseWebpDimension(buffer) {
   return null;
 }
 const DEFAULT_MERMAID_PPI = 76;
+const MIN_MERMAID_PPI = 38;
+const MAX_MERMAID_PPI = 76;
+const DEFAULT_MERMAID_RENDER_SCALE = 2;
+const MIN_MERMAID_RENDER_SCALE = 1;
+const MAX_MERMAID_RENDER_SCALE = 3;
 const CSS_BASELINE_PPI = 96;
 const DEFAULT_BASE_CSS_WIDTH = 768;
 function resolveMermaidPpi(mermaidPpi) {
   if (!Number.isFinite(mermaidPpi) || !mermaidPpi || mermaidPpi <= 0) {
     return DEFAULT_MERMAID_PPI;
   }
-  return mermaidPpi;
+  return clamp(Math.round(mermaidPpi), MIN_MERMAID_PPI, MAX_MERMAID_PPI);
+}
+function resolveMermaidRenderScale(mermaidRenderScale) {
+  if (!Number.isFinite(mermaidRenderScale) || !mermaidRenderScale || mermaidRenderScale <= 0) {
+    return DEFAULT_MERMAID_RENDER_SCALE;
+  }
+  return clamp(Math.round(mermaidRenderScale), MIN_MERMAID_RENDER_SCALE, MAX_MERMAID_RENDER_SCALE);
 }
 function computeMermaidTargetWidth(baseCssWidth, mermaidPpi) {
   const width = Math.max(1, Math.round(baseCssWidth * (mermaidPpi / CSS_BASELINE_PPI)));
@@ -395,6 +437,7 @@ async function replaceMermaidCodeBlocksWithImages(root, options = {}) {
     return;
   }
   const mermaidPpi = resolveMermaidPpi(options.mermaidPpi);
+  const mermaidRenderScale = resolveMermaidRenderScale(options.mermaidRenderScale);
   const renderer = options.renderer ?? renderMermaidByPuppeteer;
   const writeTempFile = options.writeTempFile ?? writeMermaidTempFile;
   for (const codeElement of blocks) {
@@ -411,12 +454,14 @@ async function replaceMermaidCodeBlocksWithImages(root, options = {}) {
       const rendered = await renderer({
         code,
         ppi: mermaidPpi,
+        renderScale: mermaidRenderScale,
         targetCssWidth
       });
       const imagePath = await writeTempFile({
         buffer: rendered.buffer,
         code,
-        ppi: mermaidPpi
+        ppi: mermaidPpi,
+        renderScale: mermaidRenderScale
       });
       const imgElement = root.ownerDocument.createElement("img");
       imgElement.setAttribute("src", imagePath);
@@ -430,7 +475,7 @@ async function replaceMermaidCodeBlocksWithImages(root, options = {}) {
   }
 }
 async function writeMermaidTempFile(input) {
-  const hash = createHash("sha1").update(input.code).update(`:${input.ppi}`).digest("hex").slice(0, 16);
+  const hash = createHash("sha1").update(input.code).update(`:${input.ppi}`).update(`:${input.renderScale}`).digest("hex").slice(0, 16);
   const tempDir = path.join(os.tmpdir(), "wenyan-mermaid");
   await fs.mkdir(tempDir, { recursive: true });
   const filePath = path.join(tempDir, `mermaid_${hash}.png`);
@@ -460,7 +505,7 @@ async function renderMermaidByPuppeteer(input) {
       await page.setViewport({
         width: Math.max(640, input.targetCssWidth + 64),
         height: 1024,
-        deviceScaleFactor: 1
+        deviceScaleFactor: input.renderScale
       });
       await page.setContent(
         `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body><div id="stage"></div></body></html>`,
@@ -534,6 +579,9 @@ async function renderMermaidByPuppeteer(input) {
     await browser?.close();
   }
 }
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
 const wenyanCoreInstance = await createWenyanCore();
 const ENV_DEFAULT_AUTHOR = "WECHAT_DEFAULT_AUTHOR";
 const ENV_CTA_PRE_HEAD = "WECHAT_CTA_PRE_HEAD";
@@ -542,7 +590,19 @@ async function renderWithTheme(markdownContent, options, assetBaseDir) {
   if (!markdownContent) {
     throw new Error("No content provided for rendering.");
   }
-  const { theme, customTheme, highlight, macStyle, footnote, mermaid, mermaidPpi } = options;
+  const {
+    theme,
+    customTheme,
+    highlight,
+    macStyle,
+    footnote,
+    mermaid,
+    mermaidPpi,
+    mermaidRenderScale,
+    longImageMode,
+    longImageRatioThreshold,
+    longImageMaxHeightVh
+  } = options;
   let handledCustomTheme = customTheme;
   if (customTheme) {
     const normalizePath = getNormalizeFilePath(customTheme);
@@ -561,12 +621,27 @@ async function renderWithTheme(markdownContent, options, assetBaseDir) {
     themeCss: handledCustomTheme,
     assetBaseDir,
     mermaid,
-    mermaidPpi
+    mermaidPpi,
+    mermaidRenderScale,
+    longImageMode,
+    longImageRatioThreshold,
+    longImageMaxHeightVh
   });
   return gzhContent;
 }
 async function renderStyledContent(content, options = {}) {
-  const { assetBaseDir, mermaid, mermaidPpi, mermaidRenderer, mermaidTempFileWriter, ...styleOptions } = options;
+  const {
+    assetBaseDir,
+    mermaid,
+    mermaidPpi,
+    mermaidRenderScale,
+    longImageMode,
+    longImageRatioThreshold,
+    longImageMaxHeightVh,
+    mermaidRenderer,
+    mermaidTempFileWriter,
+    ...styleOptions
+  } = options;
   const preHandlerContent = await wenyanCoreInstance.handleFrontMatter(content);
   const fallbackAuthor = getEnvSnippet(ENV_DEFAULT_AUTHOR);
   if (!preHandlerContent.author && fallbackAuthor) {
@@ -581,10 +656,15 @@ async function renderStyledContent(content, options = {}) {
   await replaceMermaidCodeBlocksWithImages(wenyan, {
     mermaid,
     mermaidPpi,
+    mermaidRenderScale,
     renderer: mermaidRenderer,
     writeTempFile: mermaidTempFileWriter
   });
-  await applyAdaptiveImageInteractions(wenyan, assetBaseDir);
+  await applyAdaptiveImageInteractions(wenyan, assetBaseDir, {
+    mode: longImageMode,
+    ratioThreshold: longImageRatioThreshold,
+    maxHeightVh: longImageMaxHeightVh
+  });
   const result = await wenyanCoreInstance.applyStylesWithTheme(wenyan, {
     ...styleOptions,
     preHeadCtaHtml,

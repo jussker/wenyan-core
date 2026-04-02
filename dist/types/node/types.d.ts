@@ -7,6 +7,10 @@ export interface RenderOptions {
     footnote: boolean;
     mermaid?: boolean;
     mermaidPpi?: number;
+    mermaidRenderScale?: number;
+    longImageMode?: "auto" | "always" | "off";
+    longImageRatioThreshold?: number;
+    longImageMaxHeightVh?: number;
 }
 export interface PublishOptions extends RenderOptions {
 }

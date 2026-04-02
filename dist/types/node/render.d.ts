@@ -5,6 +5,10 @@ type NodeRenderStyleOptions = ApplyStylesOptions & {
     assetBaseDir?: string;
     mermaid?: boolean;
     mermaidPpi?: number;
+    mermaidRenderScale?: number;
+    longImageMode?: "auto" | "always" | "off";
+    longImageRatioThreshold?: number;
+    longImageMaxHeightVh?: number;
     mermaidRenderer?: MermaidDiagramRenderer;
     mermaidTempFileWriter?: MermaidTempFileWriter;
 };
