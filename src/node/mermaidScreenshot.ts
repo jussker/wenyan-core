@@ -6,12 +6,18 @@ import { createRequire } from "node:module";
 import { pathToFileURL } from "node:url";
 
 const DEFAULT_MERMAID_PPI = 76;
+const MIN_MERMAID_PPI = 38;
+const MAX_MERMAID_PPI = 76;
+const DEFAULT_MERMAID_RENDER_SCALE = 2;
+const MIN_MERMAID_RENDER_SCALE = 1;
+const MAX_MERMAID_RENDER_SCALE = 3;
 const CSS_BASELINE_PPI = 96;
 const DEFAULT_BASE_CSS_WIDTH = 768;
 
 type MermaidRenderInput = {
     code: string;
     ppi: number;
+    renderScale: number;
     targetCssWidth: number;
 };
 
@@ -27,6 +33,7 @@ type MermaidTempFileWriteInput = {
     buffer: Buffer;
     code: string;
     ppi: number;
+    renderScale: number;
 };
 
 export type MermaidTempFileWriter = (input: MermaidTempFileWriteInput) => Promise<string>;
@@ -34,6 +41,7 @@ export type MermaidTempFileWriter = (input: MermaidTempFileWriteInput) => Promis
 export type MermaidScreenshotOptions = {
     mermaid?: boolean;
     mermaidPpi?: number;
+    mermaidRenderScale?: number;
     renderer?: MermaidDiagramRenderer;
     writeTempFile?: MermaidTempFileWriter;
 };
@@ -42,7 +50,14 @@ export function resolveMermaidPpi(mermaidPpi?: number): number {
     if (!Number.isFinite(mermaidPpi) || !mermaidPpi || mermaidPpi <= 0) {
         return DEFAULT_MERMAID_PPI;
     }
-    return mermaidPpi;
+    return clamp(Math.round(mermaidPpi), MIN_MERMAID_PPI, MAX_MERMAID_PPI);
+}
+
+export function resolveMermaidRenderScale(mermaidRenderScale?: number): number {
+    if (!Number.isFinite(mermaidRenderScale) || !mermaidRenderScale || mermaidRenderScale <= 0) {
+        return DEFAULT_MERMAID_RENDER_SCALE;
+    }
+    return clamp(Math.round(mermaidRenderScale), MIN_MERMAID_RENDER_SCALE, MAX_MERMAID_RENDER_SCALE);
 }
 
 export function computeMermaidTargetWidth(baseCssWidth: number, mermaidPpi: number): number {
@@ -64,6 +79,7 @@ export async function replaceMermaidCodeBlocksWithImages(
     }
 
     const mermaidPpi = resolveMermaidPpi(options.mermaidPpi);
+    const mermaidRenderScale = resolveMermaidRenderScale(options.mermaidRenderScale);
     const renderer = options.renderer ?? renderMermaidByPuppeteer;
     const writeTempFile = options.writeTempFile ?? writeMermaidTempFile;
 
@@ -83,6 +99,7 @@ export async function replaceMermaidCodeBlocksWithImages(
             const rendered = await renderer({
                 code,
                 ppi: mermaidPpi,
+                renderScale: mermaidRenderScale,
                 targetCssWidth,
             });
 
@@ -90,6 +107,7 @@ export async function replaceMermaidCodeBlocksWithImages(
                 buffer: rendered.buffer,
                 code,
                 ppi: mermaidPpi,
+                renderScale: mermaidRenderScale,
             });
 
             const imgElement = root.ownerDocument.createElement("img");
@@ -108,6 +126,7 @@ async function writeMermaidTempFile(input: MermaidTempFileWriteInput): Promise<s
     const hash = createHash("sha1")
         .update(input.code)
         .update(`:${input.ppi}`)
+        .update(`:${input.renderScale}`)
         .digest("hex")
         .slice(0, 16);
 
@@ -146,7 +165,7 @@ async function renderMermaidByPuppeteer(input: MermaidRenderInput): Promise<Merm
             await page.setViewport({
                 width: Math.max(640, input.targetCssWidth + 64),
                 height: 1024,
-                deviceScaleFactor: 1,
+                deviceScaleFactor: input.renderScale,
             });
 
             await page.setContent(
@@ -237,4 +256,8 @@ async function renderMermaidByPuppeteer(input: MermaidRenderInput): Promise<Merm
     } finally {
         await browser?.close();
     }
+}
+
+function clamp(value: number, min: number, max: number): number {
+    return Math.min(max, Math.max(min, value));
 }

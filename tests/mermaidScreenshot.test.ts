@@ -5,6 +5,8 @@ import { JSDOM } from "jsdom";
 import {
     computeMermaidTargetWidth,
     replaceMermaidCodeBlocksWithImages,
+    resolveMermaidPpi,
+    resolveMermaidRenderScale,
 } from "../src/node/mermaidScreenshot.js";
 
 describe("mermaidScreenshot", () => {
@@ -32,12 +34,12 @@ describe("mermaidScreenshot", () => {
         expect(root.querySelector("pre > code.language-mermaid")).toBeNull();
     });
 
-    it("should default to PPI 76 and pass scaled width", async () => {
+    it("should default to PPI 76 and renderScale 2", async () => {
         const dom = new JSDOM("<section id=\"wenyan\"><pre><code class=\"language-mermaid\">graph TD\nA-->B</code></pre></section>");
         const root = dom.window.document.getElementById("wenyan") as HTMLElement;
 
-        let capturedInput: { ppi: number; targetCssWidth: number } | undefined;
-        const renderer = async (input: { ppi: number; targetCssWidth: number }) => {
+        let capturedInput: { ppi: number; renderScale: number; targetCssWidth: number } | undefined;
+        const renderer = async (input: { ppi: number; renderScale: number; targetCssWidth: number }) => {
             capturedInput = input;
             return {
                 buffer: Buffer.from("mock"),
@@ -53,8 +55,44 @@ describe("mermaidScreenshot", () => {
 
         expect(capturedInput).toBeDefined();
         expect(capturedInput?.ppi).toBe(76);
+        expect(capturedInput?.renderScale).toBe(2);
         expect(capturedInput?.targetCssWidth).toBe(computeMermaidTargetWidth(768, 76));
         expect(capturedInput?.targetCssWidth).toBe(608);
+    });
+
+    it("should clamp mermaidPpi and mermaidRenderScale", async () => {
+        expect(resolveMermaidPpi()).toBe(76);
+        expect(resolveMermaidPpi(200)).toBe(76);
+        expect(resolveMermaidPpi(12)).toBe(38);
+
+        expect(resolveMermaidRenderScale()).toBe(2);
+        expect(resolveMermaidRenderScale(10)).toBe(3);
+        expect(resolveMermaidRenderScale(0.2)).toBe(1);
+    });
+
+    it("should pass clamped ppi and renderScale into renderer", async () => {
+        const dom = new JSDOM("<section id=\"wenyan\"><pre><code class=\"language-mermaid\">graph TD\nA-->B</code></pre></section>");
+        const root = dom.window.document.getElementById("wenyan") as HTMLElement;
+
+        let capturedInput: { ppi: number; renderScale: number; targetCssWidth: number } | undefined;
+
+        await replaceMermaidCodeBlocksWithImages(root, {
+            mermaidPpi: 120,
+            mermaidRenderScale: 8,
+            renderer: async (input) => {
+                capturedInput = input;
+                return {
+                    buffer: Buffer.from("mock"),
+                    width: 608,
+                    height: 300,
+                };
+            },
+            writeTempFile: async () => "/tmp/mermaid-2b.png",
+        });
+
+        expect(capturedInput).toBeDefined();
+        expect(capturedInput?.ppi).toBe(76);
+        expect(capturedInput?.renderScale).toBe(3);
     });
 
     it("should fallback gracefully when rendering fails", async () => {

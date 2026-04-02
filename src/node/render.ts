@@ -20,6 +20,10 @@ type NodeRenderStyleOptions = ApplyStylesOptions & {
     assetBaseDir?: string;
     mermaid?: boolean;
     mermaidPpi?: number;
+    mermaidRenderScale?: number;
+    longImageMode?: "auto" | "always" | "off";
+    longImageRatioThreshold?: number;
+    longImageMaxHeightVh?: number;
     mermaidRenderer?: MermaidDiagramRenderer;
     mermaidTempFileWriter?: MermaidTempFileWriter;
 };
@@ -32,7 +36,19 @@ export async function renderWithTheme(
     if (!markdownContent) {
         throw new Error("No content provided for rendering.");
     }
-    const { theme, customTheme, highlight, macStyle, footnote, mermaid, mermaidPpi } = options;
+    const {
+        theme,
+        customTheme,
+        highlight,
+        macStyle,
+        footnote,
+        mermaid,
+        mermaidPpi,
+        mermaidRenderScale,
+        longImageMode,
+        longImageRatioThreshold,
+        longImageMaxHeightVh,
+    } = options;
 
     let handledCustomTheme: string | undefined = customTheme;
     // 当用户传入自定义主题路径时，优先级最高
@@ -58,13 +74,28 @@ export async function renderWithTheme(
         assetBaseDir,
         mermaid,
         mermaidPpi,
+        mermaidRenderScale,
+        longImageMode,
+        longImageRatioThreshold,
+        longImageMaxHeightVh,
     });
 
     return gzhContent;
 }
 
 export async function renderStyledContent(content: string, options: NodeRenderStyleOptions = {}): Promise<StyledContent> {
-    const { assetBaseDir, mermaid, mermaidPpi, mermaidRenderer, mermaidTempFileWriter, ...styleOptions } = options;
+    const {
+        assetBaseDir,
+        mermaid,
+        mermaidPpi,
+        mermaidRenderScale,
+        longImageMode,
+        longImageRatioThreshold,
+        longImageMaxHeightVh,
+        mermaidRenderer,
+        mermaidTempFileWriter,
+        ...styleOptions
+    } = options;
     const preHandlerContent = await wenyanCoreInstance.handleFrontMatter(content);
     const fallbackAuthor = getEnvSnippet(ENV_DEFAULT_AUTHOR);
     if (!preHandlerContent.author && fallbackAuthor) {
@@ -81,10 +112,15 @@ export async function renderStyledContent(content: string, options: NodeRenderSt
     await replaceMermaidCodeBlocksWithImages(wenyan!, {
         mermaid,
         mermaidPpi,
+        mermaidRenderScale,
         renderer: mermaidRenderer,
         writeTempFile: mermaidTempFileWriter,
     });
-    await applyAdaptiveImageInteractions(wenyan!, assetBaseDir);
+    await applyAdaptiveImageInteractions(wenyan!, assetBaseDir, {
+        mode: longImageMode,
+        ratioThreshold: longImageRatioThreshold,
+        maxHeightVh: longImageMaxHeightVh,
+    });
     const result = await wenyanCoreInstance.applyStylesWithTheme(wenyan!, {
         ...styleOptions,
         preHeadCtaHtml,

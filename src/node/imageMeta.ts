@@ -4,6 +4,14 @@ import { RuntimeEnv } from "./runtimeEnv.js";
 const LONG_IMAGE_RATIO_THRESHOLD = 2.2;
 const LONG_IMAGE_MAX_HEIGHT_VH = 72;
 
+type LongImageMode = "auto" | "always" | "off";
+
+type AdaptiveImageOptions = {
+    mode?: LongImageMode;
+    ratioThreshold?: number;
+    maxHeightVh?: number;
+};
+
 type ImageDimension = {
     width: number;
     height: number;
@@ -12,7 +20,11 @@ type ImageDimension = {
 export async function applyAdaptiveImageInteractions(
     root: HTMLElement,
     relativePath?: string,
+    options: AdaptiveImageOptions = {},
 ): Promise<void> {
+    const mode = resolveLongImageMode(options.mode);
+    const ratioThreshold = resolveLongImageRatioThreshold(options.ratioThreshold);
+    const maxHeightVh = resolveLongImageMaxHeightVh(options.maxHeightVh);
     const images = Array.from(root.querySelectorAll<HTMLImageElement>("img"));
 
     for (const image of images) {
@@ -21,6 +33,11 @@ export async function applyAdaptiveImageInteractions(
         if (!dimension) {
             image.classList.add("wy-img-normal");
             applyNormalImageStyle(image);
+            if (mode === "always") {
+                image.classList.remove("wy-img-normal");
+                image.classList.add("wy-img-long");
+                applyLongImageInteraction(image, maxHeightVh);
+            }
             continue;
         }
 
@@ -29,14 +46,41 @@ export async function applyAdaptiveImageInteractions(
         image.setAttribute("data-wy-height", String(dimension.height));
         image.setAttribute("data-wy-ratio", ratio.toFixed(4));
 
-        if (ratio >= LONG_IMAGE_RATIO_THRESHOLD) {
+        if (mode === "off") {
+            image.classList.add("wy-img-normal");
+            applyNormalImageStyle(image);
+            continue;
+        }
+
+        if (mode === "always" || ratio >= ratioThreshold) {
             image.classList.add("wy-img-long");
-            applyLongImageInteraction(image);
+            applyLongImageInteraction(image, maxHeightVh);
         } else {
             image.classList.add("wy-img-normal");
             applyNormalImageStyle(image);
         }
     }
+}
+
+function resolveLongImageMode(mode?: LongImageMode): LongImageMode {
+    if (mode === "always" || mode === "off") {
+        return mode;
+    }
+    return "auto";
+}
+
+function resolveLongImageRatioThreshold(value?: number): number {
+    if (!Number.isFinite(value) || !value || value <= 0) {
+        return LONG_IMAGE_RATIO_THRESHOLD;
+    }
+    return value;
+}
+
+function resolveLongImageMaxHeightVh(value?: number): number {
+    if (!Number.isFinite(value) || !value || value <= 0) {
+        return LONG_IMAGE_MAX_HEIGHT_VH;
+    }
+    return value;
 }
 
 async function resolveImageDimension(
@@ -117,7 +161,7 @@ function applyNormalImageStyle(image: HTMLImageElement): void {
     image.style.setProperty("margin", "0 auto");
 }
 
-function applyLongImageInteraction(image: HTMLImageElement): void {
+function applyLongImageInteraction(image: HTMLImageElement, maxHeightVh: number): void {
     let wrapper = image.parentElement;
     if (!wrapper || !wrapper.classList.contains("wy-img-long-scroll")) {
         wrapper = image.ownerDocument.createElement("div");
@@ -128,7 +172,7 @@ function applyLongImageInteraction(image: HTMLImageElement): void {
 
     wrapper.style.setProperty("display", "block");
     wrapper.style.setProperty("margin", "0 auto");
-    wrapper.style.setProperty("max-height", `${LONG_IMAGE_MAX_HEIGHT_VH}vh`);
+    wrapper.style.setProperty("max-height", `${maxHeightVh}vh`);
     wrapper.style.setProperty("overflow-y", "auto");
     wrapper.style.setProperty("overflow-x", "hidden");
     wrapper.style.setProperty("-webkit-overflow-scrolling", "touch");
