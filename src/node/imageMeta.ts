@@ -164,7 +164,10 @@ function applyNormalImageStyle(image: HTMLImageElement): void {
 function applyLongImageInteraction(image: HTMLImageElement, maxHeightVh: number): void {
     let wrapper = image.parentElement;
     if (!wrapper || !wrapper.classList.contains("wy-img-long-scroll")) {
-        wrapper = image.ownerDocument.createElement("div");
+        // When the image lives inside a paragraph, use a phrasing wrapper element
+        // to avoid invalid p>div nesting that may be rewritten by downstream sanitizers.
+        const wrapperTag = image.parentElement?.tagName === "P" ? "span" : "div";
+        wrapper = image.ownerDocument.createElement(wrapperTag);
         wrapper.className = "wy-img-long-scroll";
         image.parentElement?.insertBefore(wrapper, image);
         wrapper.appendChild(image);

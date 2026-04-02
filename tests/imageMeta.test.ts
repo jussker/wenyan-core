@@ -94,4 +94,16 @@ describe("applyAdaptiveImageInteractions", () => {
         expect(image.classList.contains("wy-img-long")).toBe(true);
         expect(image.parentElement?.classList.contains("wy-img-long-scroll")).toBe(true);
     });
+
+    it("should use span wrapper for long image inside paragraph", async () => {
+        const dom = new JSDOM(`<body><section id="wenyan"><p><img src="demo.png" width="300" height="900"></p></section></body>`);
+        const wenyan = dom.window.document.getElementById("wenyan") as HTMLElement;
+
+        await applyAdaptiveImageInteractions(wenyan);
+
+        const image = wenyan.querySelector("img") as HTMLImageElement;
+        const wrapper = image.parentElement as HTMLElement;
+        expect(wrapper.classList.contains("wy-img-long-scroll")).toBe(true);
+        expect(wrapper.tagName).toBe("SPAN");
+    });
 });
